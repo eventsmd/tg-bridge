@@ -137,3 +137,5 @@ go.work
 .env
 
 .idea
+
+session/
