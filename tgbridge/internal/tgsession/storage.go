@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"log"
-	"tg-bridge/internal/config"
+	"tg-bridge/tgbridge/internal/config"
 
 	"github.com/gotd/td/session"
 )

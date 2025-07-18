@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"log"
-	"tg-bridge/internal/config"
-	"tg-bridge/internal/tgsession"
+	"tg-bridge/tgbridge/internal/config"
+	"tg-bridge/tgbridge/internal/tgsession"
 
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
