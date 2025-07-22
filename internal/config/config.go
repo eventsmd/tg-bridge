@@ -4,18 +4,15 @@ import (
 	"log"
 	"os"
 	"strconv"
-
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
 	TelegramApiId   int
 	TelegramApiHash string
-	Phone           string
+	TelegramSession string
 }
 
 func LoadConfig() Config {
-	LoadEnvFile()
 	config := InitConfig()
 	CheckConfigFields(config)
 	return config
@@ -24,8 +21,8 @@ func LoadConfig() Config {
 func CheckConfigFields(config Config) {
 	if config.TelegramApiId == 0 ||
 		config.TelegramApiHash == "" ||
-		config.Phone == "" {
-		log.Fatalf("One or more environment variables are missing. Check .env file.")
+		config.TelegramSession == "" {
+		log.Fatalf("One or more environment variables are missing.")
 	}
 }
 
@@ -34,14 +31,7 @@ func InitConfig() Config {
 	config := Config{
 		TelegramApiId:   telegramApiId,
 		TelegramApiHash: os.Getenv("TELEGRAM_API_HASH"),
-		Phone:           os.Getenv("PHONE"),
+		TelegramSession: os.Getenv("TELEGRAM_SESSION"),
 	}
 	return config
-}
-
-func LoadEnvFile() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 }

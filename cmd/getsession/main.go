@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"tg-bridge/getsession/internal/config"
+	"strconv"
 
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
@@ -14,8 +14,6 @@ import (
 )
 
 func main() {
-	cfg := config.LoadConfig()
-
 	// Create session storage (file-based)
 	sessionDir := "./generated-session"
 	if err := os.MkdirAll(sessionDir, 0700); err != nil {
@@ -28,7 +26,11 @@ func main() {
 	}
 
 	// Create Telegram client
-	client := telegram.NewClient(cfg.TelegramApiId, cfg.TelegramApiHash, telegram.Options{
+	apiId, _ := strconv.Atoi(os.Getenv("TELEGRAM_API_ID"))
+	apiHash := os.Getenv("TELEGRAM_API_HASH")
+	phone := os.Getenv("PHONE")
+
+	client := telegram.NewClient(apiId, apiHash, telegram.Options{
 		SessionStorage: storage,
 	})
 
@@ -45,7 +47,7 @@ func main() {
 
 			// Create flow for authentication
 			flow := auth.NewFlow(
-				auth.Constant(cfg.Phone, "password", auth.CodeAuthenticatorFunc(codePrompt)),
+				auth.Constant(phone, "password", auth.CodeAuthenticatorFunc(codePrompt)),
 				auth.SendCodeOptions{},
 			)
 

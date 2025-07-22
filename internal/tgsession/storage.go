@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"log"
-	"tg-bridge/tgbridge/internal/config"
 
 	"github.com/gotd/td/session"
 )
@@ -29,10 +28,11 @@ func (s *MemorySessionStorage) StoreSession(ctx context.Context, data []byte) er
 	return nil
 }
 
-// CreateSessionStorage Creates in memory session storage with previously generated telegram session
-func CreateSessionStorage(cfg config.Config) (session.Storage, error) {
+// CreateSessionStorage Creates in memory session storage with previously generated telegram
+// session encoded in Base64
+func CreateSessionStorage(telegramSession string) (session.Storage, error) {
 	var sessionStorage session.Storage
-	sessionData, err := base64.StdEncoding.DecodeString(cfg.TelegramSession)
+	sessionData, err := base64.StdEncoding.DecodeString(telegramSession)
 	if err != nil {
 		log.Fatal("Invalid base64 session data:", err)
 	}

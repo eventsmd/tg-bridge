@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"log"
-	"tg-bridge/tgbridge/internal/config"
-	"tg-bridge/tgbridge/internal/tgsession"
+	"tg-bridge/internal/config"
+	"tg-bridge/internal/tgsession"
 
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
@@ -13,7 +13,7 @@ import (
 func main() {
 	cfg := config.LoadConfig()
 
-	sessionStorage, err := tgsession.CreateSessionStorage(cfg)
+	sessionStorage, err := tgsession.CreateSessionStorage(cfg.TelegramSession)
 	client := CreateTelegramClient(cfg, sessionStorage)
 
 	err = client.Run(context.Background(), func(ctx context.Context) error {
