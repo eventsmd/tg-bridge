@@ -139,3 +139,4 @@ go.work
 .idea
 
 generated-session/
+bin/

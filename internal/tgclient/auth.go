@@ -1,11 +1,10 @@
-package main
+package tgclient
 
 import (
 	"bufio"
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
@@ -13,30 +12,25 @@ import (
 	"github.com/gotd/td/tg"
 )
 
-func main() {
-	// Create session storage (file-based)
-	sessionDir := "./generated-session"
-	if err := os.MkdirAll(sessionDir, 0700); err != nil {
-		panic(err)
-	}
+type AuthParams struct {
+	TelegramApiId   int
+	TelegramApiHash string
+	Phone           string
+	Code            string
+	Password        string
+	SessionDir      string
+}
 
-	// Create session storage
+func AuthWithPhoneNumber(params AuthParams) error {
+	ctx := context.Background()
+
 	storage := &session.FileStorage{
-		Path: sessionDir + "/session.json",
+		Path: params.SessionDir + "/session.json",
 	}
-
-	// Create Telegram client
-	apiId, _ := strconv.Atoi(os.Getenv("TELEGRAM_API_ID"))
-	apiHash := os.Getenv("TELEGRAM_API_HASH")
-	phone := os.Getenv("PHONE")
-
-	client := telegram.NewClient(apiId, apiHash, telegram.Options{
+	client := telegram.NewClient(params.TelegramApiId, params.TelegramApiHash, telegram.Options{
 		SessionStorage: storage,
 	})
-
-	// Run the client
-	err := client.Run(context.Background(), func(ctx context.Context) error {
-		// Check if we're already authorized
+	err := client.Run(ctx, func(ctx context.Context) error {
 		status, err := client.Auth().Status(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get auth status: %w", err)
@@ -44,14 +38,10 @@ func main() {
 
 		if !status.Authorized {
 			fmt.Println("Not authorized, starting authentication flow...")
-
-			// Create flow for authentication
 			flow := auth.NewFlow(
-				auth.Constant(phone, "password", auth.CodeAuthenticatorFunc(codePrompt)),
+				auth.Constant(params.Phone, "password", auth.CodeAuthenticatorFunc(codePrompt)),
 				auth.SendCodeOptions{},
 			)
-
-			// Start authentication
 			if err := client.Auth().IfNecessary(ctx, flow); err != nil {
 				return fmt.Errorf("failed to authenticate: %w", err)
 			}
@@ -60,7 +50,6 @@ func main() {
 		fmt.Println("Successfully authenticated!")
 		fmt.Println("Session has been created and saved.")
 
-		// Test the session by getting user info
 		api := client.API()
 		user, err := api.UsersGetFullUser(ctx, &tg.InputUserSelf{})
 		if err != nil {
@@ -71,14 +60,13 @@ func main() {
 
 		return nil
 	})
-
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
-// Custom code prompt
-func codePrompt(ctx context.Context, sentCode *tg.AuthSentCode) (string, error) {
+func codePrompt(_ context.Context, _ *tg.AuthSentCode) (string, error) {
 	fmt.Print("Enter verification code: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
