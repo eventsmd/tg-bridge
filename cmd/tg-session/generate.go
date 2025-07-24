@@ -1,13 +1,13 @@
 package main
 
 import (
-	"errors"
 	"tg-bridge/internal/tgclient"
 
 	"github.com/spf13/cobra"
 )
 
 var (
+	dryRun     bool
 	apiId      int
 	apiHash    string
 	phone      string
@@ -21,17 +21,11 @@ var generateCmd = &cobra.Command{
 	Long: `Generates and stores a Telegram session file.
 
 Examples:
-  tg-session generate --apiId 123 --apiHash "123456" --phone "+1234567890" --sessionDir "./session-dir"`,
+  tg-session generate --apiId 123 --apiHash "123456" --phone "+1234567890" --sessionDir "./generated-session`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if phone != "" ||
-			apiId != 0 ||
-			apiHash != "" ||
-			sessionDir != "" {
-			return errors.New("one of the params is missing. See help for more details")
-		}
-
 		return tgclient.AuthWithPhoneNumber(tgclient.AuthParams{
+			DryRun:          dryRun,
 			Phone:           phone,
 			TelegramApiId:   apiId,
 			TelegramApiHash: apiHash,
@@ -41,10 +35,16 @@ Examples:
 }
 
 func init() {
+	generateCmd.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Perform a dry run without generating the actual session")
 	generateCmd.Flags().IntVar(&apiId, "apiId", 0, "Telegram API ID")
 	generateCmd.Flags().StringVar(&apiHash, "apiHash", "", "Telegram API Hash")
 	generateCmd.Flags().StringVar(&phone, "phone", "", "Phone number to log in with (for user account)")
-	generateCmd.Flags().StringVar(&sessionDir, "session-dir", "./generated-session",
+	generateCmd.Flags().StringVar(&sessionDir, "sessionDir", "./generated-session",
 		"Directory to store generated session files")
+
+	requiredFlags := []string{"apiId", "apiHash", "phone"}
+	for _, flag := range requiredFlags {
+		_ = generateCmd.MarkFlagRequired(flag)
+	}
 	rootCmd.AddCommand(generateCmd)
 }
