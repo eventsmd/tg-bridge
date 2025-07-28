@@ -3,7 +3,7 @@ package tgclient
 import (
 	"bufio"
 	"context"
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/gotd/td/session"
@@ -22,41 +22,50 @@ type AuthParams struct {
 	SessionDir      string
 }
 
+func CreateTelegramClient(apiId int, apiHash string, sessionStorage session.Storage) *telegram.Client {
+	return telegram.NewClient(apiId, apiHash, telegram.Options{
+		SessionStorage: sessionStorage,
+	})
+}
+
+func CheckTelegramSession(ctx context.Context, client *telegram.Client, onNotAuthorized func() error) error {
+	status, err := client.Auth().Status(ctx)
+	if err != nil {
+		return err
+	}
+	if !status.Authorized {
+		err := onNotAuthorized()
+		if err != nil {
+			return err
+		}
+	}
+	log.Println("Successfully authenticated")
+
+	return nil
+}
+
 func AuthWithPhoneNumber(params AuthParams) error {
 	ctx := context.Background()
 	storage := &session.FileStorage{
 		Path: params.SessionDir + "/session.json",
 	}
 	if params.DryRun {
-		return generateSampleSession(ctx, storage)
+		return GenerateSampleSession(ctx, storage)
 	}
 
-	client := telegram.NewClient(params.TelegramApiId, params.TelegramApiHash, telegram.Options{
-		SessionStorage: storage,
-	})
+	client := CreateTelegramClient(params.TelegramApiId, params.TelegramApiHash, storage)
 	err := client.Run(ctx, func(ctx context.Context) error {
-		status, err := client.Auth().Status(ctx)
+		err := CheckTelegramSession(ctx, client, func() error {
+			log.Println("Not authorized, starting authentication flow...")
+			return initiateAuthCodeRequest(ctx, params, client)
+		})
 		if err != nil {
-			return fmt.Errorf("failed to get auth status: %w", err)
+			return err
 		}
 
-		if !status.Authorized {
-			fmt.Println("Not authorized, starting authentication flow...")
-			codeErr := initiateAuthCodeRequest(ctx, params, client)
-			if codeErr != nil {
-				return codeErr
-			}
-		}
+		log.Println("Session has been created and saved.")
 
-		fmt.Println("Successfully authenticated!")
-		fmt.Println("Session has been created and saved.")
-
-		userErr := readAuthenticatedUserInfo(ctx, client)
-		if userErr != nil {
-			return userErr
-		}
-
-		return nil
+		return readAuthenticatedUserInfo(ctx, client)
 	})
 	if err != nil {
 		return err
@@ -68,28 +77,10 @@ func readAuthenticatedUserInfo(ctx context.Context, client *telegram.Client) err
 	api := client.API()
 	user, err := api.UsersGetFullUser(ctx, &tg.InputUserSelf{})
 	if err != nil {
-		return fmt.Errorf("failed to get user info: %w", err)
+		log.Printf("failed to get user info: %s", err)
+		return err
 	}
-	fmt.Printf("Logged in as: %s\n", user.Users[0].(*tg.User).FirstName)
-	return nil
-}
-
-func generateSampleSession(ctx context.Context, session *session.FileStorage) error {
-	// sample session with minimally required session fields
-	sessionJson := `{
-  "Version": 1,
-  "Data": {
-    "DC": 0,
-    "Addr": "",
-    "AuthKey": "AUTH_KEY_HERE",
-    "AuthKeyID": "AUTH_KEY_ID_HERE",
-    "Salt": 12345
-  }
-}`
-	err := session.StoreSession(ctx, []byte(sessionJson))
-	if err != nil {
-		return fmt.Errorf("failed to save stub sesion to file: %w", err)
-	}
+	log.Printf("Logged in as: %s\n", user.Users[0].(*tg.User).FirstName)
 	return nil
 }
 
@@ -99,13 +90,14 @@ func initiateAuthCodeRequest(ctx context.Context, params AuthParams, client *tel
 		auth.SendCodeOptions{},
 	)
 	if err := client.Auth().IfNecessary(ctx, flow); err != nil {
-		return fmt.Errorf("failed to authenticate: %w", err)
+		log.Printf("failed to authenticate: %s", err)
+		return err
 	}
 	return nil
 }
 
 func codePrompt(_ context.Context, _ *tg.AuthSentCode) (string, error) {
-	fmt.Print("Enter verification code: ")
+	log.Print("Enter verification code: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	return scanner.Text(), scanner.Err()

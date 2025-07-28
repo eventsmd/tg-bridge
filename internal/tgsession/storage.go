@@ -28,9 +28,9 @@ func (s *MemorySessionStorage) StoreSession(ctx context.Context, data []byte) er
 	return nil
 }
 
-// CreateSessionStorage Creates in memory session storage with previously generated telegram
+// CreateInMemorySessionStorage Creates in memory session storage with previously generated telegram
 // session encoded in Base64
-func CreateSessionStorage(telegramSession string) (session.Storage, error) {
+func CreateInMemorySessionStorage(telegramSession string) (session.Storage, error) {
 	var sessionStorage session.Storage
 	sessionData, err := base64.StdEncoding.DecodeString(telegramSession)
 	if err != nil {
