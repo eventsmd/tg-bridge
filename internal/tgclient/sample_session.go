@@ -25,5 +25,6 @@ func GenerateSampleSession(ctx context.Context, session *session.FileStorage) er
 		log.Printf("failed to save sample sesion to file: %s", err)
 		return err
 	}
+	log.Printf("sample session created, check %s", session.Path)
 	return nil
 }
