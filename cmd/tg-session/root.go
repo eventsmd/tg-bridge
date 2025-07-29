@@ -11,8 +11,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "tg-session",
 	Short: "A CLI tool to generate Telegram sessions for user accounts",
-	Long: `tg-session is a command-line utility 
-for generating and saving Telegram sessions using a phone number.`,
+	Long:  `tg-session is a command-line utility for generating Telegram sessions using a phone number.`,
 	// No Run here — root just serves as a base for subcommands
 }
 

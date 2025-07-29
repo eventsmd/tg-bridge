@@ -3,12 +3,12 @@ package tgclient
 import (
 	"context"
 	"log"
-
-	"github.com/gotd/td/session"
+	"tg-bridge/internal/tgsession"
 )
 
 // GenerateSampleSession generates sample session JSON and stores in provided session storage
-func GenerateSampleSession(ctx context.Context, session *session.FileStorage) error {
+func GenerateSampleSession(ctx context.Context, session *tgsession.MemorySessionStorage) error {
+	log.Printf("Generating sample session")
 	// sample session with minimally required session fields
 	sessionJson := `{
   "Version": 1,
@@ -22,9 +22,8 @@ func GenerateSampleSession(ctx context.Context, session *session.FileStorage) er
 }`
 	err := session.StoreSession(ctx, []byte(sessionJson))
 	if err != nil {
-		log.Printf("failed to save sample sesion to file: %s", err)
+		log.Printf("failed to save sample sesion: %s", err)
 		return err
 	}
-	log.Printf("sample session created, check %s", session.Path)
-	return nil
+	return PrintEncodedSession(ctx, session)
 }

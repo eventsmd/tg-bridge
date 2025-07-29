@@ -3,8 +3,10 @@ package tgclient
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
 	"log"
 	"os"
+	"tg-bridge/internal/tgsession"
 
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
@@ -17,9 +19,7 @@ type AuthParams struct {
 	TelegramApiId   int
 	TelegramApiHash string
 	Phone           string
-	Code            string
 	Password        string
-	SessionDir      string
 }
 
 func CreateTelegramClient(apiId int, apiHash string, sessionStorage session.Storage) *telegram.Client {
@@ -46,30 +46,39 @@ func CheckTelegramSession(ctx context.Context, client *telegram.Client, onNotAut
 
 func AuthWithPhoneNumber(params AuthParams) error {
 	ctx := context.Background()
-	storage := &session.FileStorage{
-		Path: params.SessionDir + "/session.json",
-	}
+	storage := tgsession.NewMemorySessionStorage([]byte{})
 	if params.DryRun {
 		return GenerateSampleSession(ctx, storage)
 	}
 
 	client := CreateTelegramClient(params.TelegramApiId, params.TelegramApiHash, storage)
 	err := client.Run(ctx, func(ctx context.Context) error {
-		err := CheckTelegramSession(ctx, client, func() error {
-			log.Println("Not authorized, starting authentication flow...")
-			return initiateAuthCodeRequest(ctx, params, client)
-		})
+		err := initiateAuthCodeRequest(ctx, params, client)
 		if err != nil {
 			return err
 		}
-
-		log.Println("Session has been created and saved.")
+		errSession := PrintEncodedSession(ctx, storage)
+		if errSession != nil {
+			return errSession
+		}
 
 		return readAuthenticatedUserInfo(ctx, client)
 	})
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func PrintEncodedSession(ctx context.Context,
+	sessionStorage *tgsession.MemorySessionStorage) error {
+	log.Println("Session has been created and saved.")
+	loadedSession, err := sessionStorage.LoadSession(ctx)
+	if err != nil {
+		return err
+	}
+	encodedSession := base64.StdEncoding.EncodeToString(loadedSession)
+	log.Printf("Base64 encoded session: %s", encodedSession)
 	return nil
 }
 
