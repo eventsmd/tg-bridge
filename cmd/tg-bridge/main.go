@@ -47,13 +47,6 @@ func main() {
 	// Channel to signal when Telegram request is done
 	telegramDone := make(chan struct{})
 
-	// Start Prometheus metrics server
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		// TODO: startPrometheusServer(ctx, prometheusPort)
-	}()
-
 	// Start Telegram API requests goroutine
 	wg.Add(1)
 	go func() {
@@ -64,13 +57,6 @@ func main() {
 		if err != nil {
 			log.Printf("Telegram request failed: %v", err)
 		}
-	}()
-
-	// Start metrics collection goroutine
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		// TODO: sendMetricsToPrometheus(ctx, 5*time.Second) // Update metrics every 5 seconds
 	}()
 
 	log.Println("Application started. Press Ctrl+C to force shutdown...")
