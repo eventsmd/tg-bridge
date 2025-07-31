@@ -31,15 +31,7 @@ func main() {
 	}
 	client := tgclient.CreateTelegramClient(cfg.TelegramApiId, cfg.TelegramApiHash, sessionStorage)
 
-	// Test connection first
-	connectCtx, connectCancel := context.WithTimeout(ctx, 30*time.Second)
-	err = tgclient.CheckTelegramSession(connectCtx, client, func() error {
-		return errors.New("not authorized, session is not valid")
-	})
-	connectCancel()
-	if err != nil {
-		log.Fatalf("Failed to connect to Telegram: %v", err)
-	}
+	log.Println("Application started. Press Ctrl+C to force shutdown...")
 
 	// Use WaitGroup to manage goroutines
 	var wg sync.WaitGroup
@@ -53,13 +45,27 @@ func main() {
 		defer wg.Done()
 		defer close(telegramDone) // Signal completion
 		// TODO: replace test API request with real logic to read messages from channels
-		err := tgclient.ReadAuthenticatedUserInfo(ctx, client)
+		err := client.Run(ctx, func(ctx context.Context) error {
+			// Test connection first
+			connectCtx, connectCancel := context.WithTimeout(ctx, 30*time.Second)
+			err = tgclient.CheckTelegramSession(connectCtx, client, func() error {
+				return errors.New("not authorized, session is not valid")
+			})
+			connectCancel()
+			if err != nil {
+				log.Fatalf("Failed to connect to Telegram: %v", err)
+			}
+
+			err := tgclient.ReadAuthenticatedUserInfo(ctx, client)
+			if err != nil {
+				log.Printf("Couldn't read user info: %v", err)
+			}
+			return nil
+		})
 		if err != nil {
 			log.Printf("Telegram request failed: %v", err)
 		}
 	}()
-
-	log.Println("Application started. Press Ctrl+C to force shutdown...")
 
 	// Wait for Telegram request to complete
 	select {

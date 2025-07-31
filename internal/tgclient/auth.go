@@ -29,20 +29,18 @@ func CreateTelegramClient(apiId int, apiHash string, sessionStorage session.Stor
 }
 
 func CheckTelegramSession(ctx context.Context, client *telegram.Client, onNotAuthorized func() error) error {
-	return client.Run(ctx, func(ctx context.Context) error {
-		status, err := client.Auth().Status(ctx)
+	status, err := client.Auth().Status(ctx)
+	if err != nil {
+		return err
+	}
+	if !status.Authorized {
+		err := onNotAuthorized()
 		if err != nil {
 			return err
 		}
-		if !status.Authorized {
-			err := onNotAuthorized()
-			if err != nil {
-				return err
-			}
-		}
-		log.Println("Successfully authenticated")
-		return nil
-	})
+	}
+	log.Println("Successfully authenticated")
+	return nil
 }
 
 func AuthWithPhoneNumber(params AuthParams) error {
@@ -84,16 +82,14 @@ func PrintEncodedSession(ctx context.Context,
 }
 
 func ReadAuthenticatedUserInfo(ctx context.Context, client *telegram.Client) error {
-	return client.Run(ctx, func(ctx context.Context) error {
-		api := client.API()
-		user, err := api.UsersGetFullUser(ctx, &tg.InputUserSelf{})
-		if err != nil {
-			log.Printf("failed to get user info: %s", err)
-			return err
-		}
-		log.Printf("Logged in as: %s\n", user.Users[0].(*tg.User).FirstName)
-		return nil
-	})
+	api := client.API()
+	user, err := api.UsersGetFullUser(ctx, &tg.InputUserSelf{})
+	if err != nil {
+		log.Printf("failed to get user info: %s", err)
+		return err
+	}
+	log.Printf("Logged in as: %s\n", user.Users[0].(*tg.User).FirstName)
+	return nil
 }
 
 func initiateAuthCodeRequest(ctx context.Context, params AuthParams, client *telegram.Client) error {
