@@ -69,14 +69,16 @@ func AuthWithPhoneNumber(params AuthParams) error {
 	return nil
 }
 
-func PrintEncodedSession(ctx context.Context,
-	sessionStorage *tgsession.MemorySessionStorage) error {
-	log.Println("Session has been created and saved.")
+func PrintEncodedSession(ctx context.Context, sessionStorage session.Storage) error {
 	loadedSession, err := sessionStorage.LoadSession(ctx)
 	if err != nil {
 		return err
 	}
-	encodedSession := base64.StdEncoding.EncodeToString(loadedSession)
+	shortSession, err := tgsession.TrimSession(loadedSession)
+	if err != nil {
+		return err
+	}
+	encodedSession := base64.StdEncoding.EncodeToString(shortSession)
 	log.Printf("Base64 encoded session: %s", encodedSession)
 	return nil
 }
