@@ -15,8 +15,8 @@ func GenerateSampleSession(ctx context.Context, session *tgsession.MemorySession
   "Data": {
 	"DC": 0,
 	"Addr": "",
-	"AuthKey": "AUTH_KEY_HERE",
-	"AuthKeyID": "AUTH_KEY_ID_HERE",
+	"AuthKey": "QVVUSF9LRVlfSEVSRQo=",
+	"AuthKeyID": "QVVUSF9LRVlfSURfSEVSRQo=",
 	"Salt": 12345
   }
 }`
