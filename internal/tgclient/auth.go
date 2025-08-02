@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/base64"
+	"github.com/fatih/color"
 	"log"
 	"os"
 	"tg-bridge/internal/tgsession"
@@ -56,7 +57,9 @@ func AuthWithPhoneNumber(params AuthParams) error {
 		if err != nil {
 			return err
 		}
-		errSession := PrintEncodedSession(ctx, storage)
+		sessionBase64, errSession := GetEncodedSession(ctx, storage)
+		color.Cyan("Base64 encoded session")
+		color.Green(sessionBase64)
 		if errSession != nil {
 			return errSession
 		}
@@ -69,18 +72,17 @@ func AuthWithPhoneNumber(params AuthParams) error {
 	return nil
 }
 
-func PrintEncodedSession(ctx context.Context, sessionStorage session.Storage) error {
+func GetEncodedSession(ctx context.Context, sessionStorage session.Storage) (string, error) {
 	loadedSession, err := sessionStorage.LoadSession(ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
 	shortSession, err := tgsession.TrimSession(loadedSession)
 	if err != nil {
-		return err
+		return "", err
 	}
 	encodedSession := base64.StdEncoding.EncodeToString(shortSession)
-	log.Printf("Base64 encoded session: %s", encodedSession)
-	return nil
+	return encodedSession, nil
 }
 
 func ReadAuthenticatedUserInfo(ctx context.Context, client *telegram.Client) error {

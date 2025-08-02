@@ -2,13 +2,14 @@ package tgclient
 
 import (
 	"context"
-	"log"
+	"github.com/fatih/color"
 	"tg-bridge/internal/tgsession"
 )
 
 // GenerateSampleSession generates sample session JSON and stores in provided session storage
 func GenerateSampleSession(ctx context.Context, session *tgsession.MemorySessionStorage) error {
-	log.Printf("Generating sample session")
+	_, _ = color.New(color.FgBlack, color.BgHiYellow).Print(" Warning! ")
+	color.Yellow(" Generating sample session...")
 	// sample session with minimally required session fields
 	sessionJson := `{
   "Version": 1,
@@ -22,8 +23,13 @@ func GenerateSampleSession(ctx context.Context, session *tgsession.MemorySession
 }`
 	err := session.StoreSession(ctx, []byte(sessionJson))
 	if err != nil {
-		log.Printf("failed to save sample sesion: %s", err)
+		color.Red("failed to save sample session: %s", err)
 		return err
 	}
-	return PrintEncodedSession(ctx, session)
+	sessionBase64, err := GetEncodedSession(ctx, session)
+	if err == nil {
+		color.Cyan("Base64 encoded session:")
+		color.Green(sessionBase64)
+	}
+	return err
 }
