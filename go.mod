@@ -1,8 +1,6 @@
 module tg-bridge
 
-go 1.23.3
-
-toolchain go1.23.11
+go 1.24.6
 
 require (
 	github.com/fatih/color v1.18.0
