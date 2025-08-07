@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"context"
 	"encoding/base64"
-	"github.com/fatih/color"
 	"log"
 	"os"
 	"tg-bridge/internal/tgsession"
+
+	"github.com/fatih/color"
 
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
@@ -98,7 +99,9 @@ func ReadAuthenticatedUserInfo(ctx context.Context, client *telegram.Client) err
 
 func initiateAuthCodeRequest(ctx context.Context, params AuthParams, client *telegram.Client) error {
 	flow := auth.NewFlow(
-		auth.Constant(params.Phone, "password", auth.CodeAuthenticatorFunc(codePrompt)),
+		// in case code authentication fails, password needs to be provided as second factor
+		// we don't handle that flow at the moment
+		auth.Constant(params.Phone, "", auth.CodeAuthenticatorFunc(codePrompt)),
 		auth.SendCodeOptions{},
 	)
 	if err := client.Auth().IfNecessary(ctx, flow); err != nil {
