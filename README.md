@@ -54,6 +54,10 @@ Add required environment variables:
 - `TELEGRAM_API_ID`=YOUR_API_ID_HERE
 - `TELEGRAM_API_HASH`="YOUR_API_HASH_HERE"
 - `TELEGRAM_SESSION`="YOUR_SESSION_JSON_ENCODED_INTO_BASE64_FORMAT"
+- `TEMPORAL_HOST_PORT` - Host:Port of temporal server
+- `TEMPORAL_NAMESPACE` - Namespace for temporal tasks
+- `TEMPORAL_TASK_QUEUE` - Task queue name
+- `TEMPORAL_WORKFLOW_TYPE` - Workflow type name
 
 In order to run main `tg-bridge` application build and run the application:
 ```go
