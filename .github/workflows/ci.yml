@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+          check-latest: true
+          cache: true
+
+      - name: Run tests
+        run: go test ./...
+
+  build_and_push_image:
+    name: Build & Push image (GHCR on main)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+      PUBLISH: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pack CLI
+        uses: buildpacks/github-actions/setup-pack@v5.0.0
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Make script executable
+        run: chmod +x ./scripts/buildpack-build-image.sh
+
+      - name: Build & publish image with Buildpacks
+        env:
+          IMAGE: ${{ env.IMAGE }}
+          PUBLISH: ${{ env.PUBLISH }}
+          BUILDER: ${{ env.BUILDER }}
+        run: ./scripts/buildpack-build-image.sh
+
+  release_cli:
+    name: Build & Upload CLI on Release
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ github.event.release.tag_name }}
+      BINARY_NAME: tg-session
+      PKG: ./cmd/tg-session
+      OUTDIR: dist
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+          check-latest: true
+          cache: true
+
+      - name: Make script executable
+        run: chmod +x ./scripts/build-matrix-binaries.sh
+
+      - name: Build matrix binaries
+        run: ./scripts/build-matrix-binaries.sh
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
