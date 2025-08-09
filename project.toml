@@ -1,0 +1,25 @@
+[_]
+schema-version = "0.2"
+source-url = "https://github.com/eventsmd/tg-bridge"
+
+[[_.licenses]]
+type = "Apache-2.0"
+uri = "LICENSE"
+
+[project]
+id = "tg-bridge"
+name = "tg-bridge"
+
+[io.buildpacks]
+exclude = [
+    "../../README.md",
+    "../../LICENSE"
+]
+
+[[io.buildpacks.build.env]]
+name="BP_GO_VERSION"
+value="1.24.*"
+
+[[io.buildpacks.build.env]]
+name="BP_GO_TARGETS"
+value="./cmd/tg-bridge"
