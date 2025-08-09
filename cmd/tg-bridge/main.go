@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"tg-bridge/internal/config"
+	"tg-bridge/internal/healthserver"
 	"tg-bridge/internal/tgclient"
 	"tg-bridge/internal/tgsession"
 	"time"
@@ -33,8 +36,18 @@ func main() {
 
 	log.Println("Application started. Press Ctrl+C to force shutdown...")
 
-	// Use WaitGroup to manage goroutines
 	var wg sync.WaitGroup
+
+	// Health/Readiness server
+	hs := healthserver.New(fmt.Sprintf(":%d", cfg.HttpPort))
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := hs.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("HTTP server error: %v", err)
+		}
+	}()
+	log.Printf("Health/Ready server listening on %s", hs.Addr())
 
 	// Channel to signal when Telegram request is done
 	telegramDone := make(chan struct{})
@@ -56,18 +69,21 @@ func main() {
 				log.Fatalf("Failed to connect to Telegram: %v", err)
 			}
 
-			err := tgclient.ReadAuthenticatedUserInfo(ctx, client)
-			if err != nil {
+			// Mark service as ready once Telegram session is validated
+			hs.SetReady(true)
+
+			if err := tgclient.ReadAuthenticatedUserInfo(ctx, client); err != nil {
 				log.Printf("Couldn't read user info: %v", err)
 			}
 			return nil
 		})
 		if err != nil {
+			hs.SetReady(false)
 			log.Printf("Telegram request failed: %v", err)
 		}
 	}()
 
-	// Wait for Telegram request to complete
+	// Wait for Telegram request to complete or a shutdown signal
 	select {
 	case <-telegramDone:
 		log.Println("✅ Telegram request completed, initiating shutdown...")
@@ -76,7 +92,15 @@ func main() {
 	}
 
 	// Cancel context to signal all goroutines to stop
+	hs.SetReady(false)
 	cancel()
+
+	// Graceful shutdown of HTTP server
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	if err := hs.Shutdown(shutdownCtx); err != nil {
+		log.Printf("HTTP server shutdown error: %v", err)
+	}
+	shutdownCancel()
 
 	// Wait for all goroutines to finish
 	wg.Wait()

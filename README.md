@@ -55,6 +55,9 @@ Add required environment variables:
 - `TELEGRAM_API_HASH`="YOUR_API_HASH_HERE"
 - `TELEGRAM_SESSION`="YOUR_SESSION_JSON_ENCODED_INTO_BASE64_FORMAT"
 
+There is also an optional environment variable:
+- `HTTP_PORT`=1234 - default port for http server, if not provided 8080 will be used.
+
 In order to run main `tg-bridge` application build and run the application:
 ```go
 go build -o bin/tg-bridge ./cmd/tg-bridge 
