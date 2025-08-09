@@ -10,6 +10,7 @@ type Config struct {
 	TelegramApiId   int
 	TelegramApiHash string
 	TelegramSession string
+	HttpPort        int
 }
 
 func LoadConfig() Config {
@@ -28,10 +29,16 @@ func CheckConfigFields(config Config) {
 
 func InitConfig() Config {
 	telegramApiId, _ := strconv.Atoi(os.Getenv("TELEGRAM_API_ID"))
+	port, _ := strconv.Atoi(os.Getenv("HTTP_PORT"))
+	if port == 0 {
+		port = 8080
+	}
 	config := Config{
 		TelegramApiId:   telegramApiId,
 		TelegramApiHash: os.Getenv("TELEGRAM_API_HASH"),
 		TelegramSession: os.Getenv("TELEGRAM_SESSION"),
+		HttpPort:        port,
 	}
+
 	return config
 }
