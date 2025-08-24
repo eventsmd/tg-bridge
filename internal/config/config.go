@@ -7,14 +7,15 @@ import (
 )
 
 type Config struct {
-	TelegramApiId   int
-	TelegramApiHash string
-	TelegramSession string
-	TemporalHostPort     string
-	TemporalNamespace    string
-	TemporalTaskQueue    string
-	TemporalWorkflowType string
-	HttpPort        int
+	PostgresConnectionString string
+	TelegramApiId            int
+	TelegramApiHash          string
+	TelegramSession          string
+	TemporalHostPort         string
+	TemporalNamespace        string
+	TemporalTaskQueue        string
+	TemporalWorkflowType     string
+	HttpPort                 int
 }
 
 func LoadConfig() Config {
@@ -24,7 +25,8 @@ func LoadConfig() Config {
 }
 
 func CheckConfigFields(config Config) {
-	if config.TelegramApiId == 0 ||
+	if config.PostgresConnectionString == "" ||
+		config.TelegramApiId == 0 ||
 		config.TelegramApiHash == "" ||
 		config.TelegramSession == "" ||
 		config.TemporalHostPort == "" ||
@@ -42,14 +44,15 @@ func InitConfig() Config {
 		port = 8080
 	}
 	config := Config{
-		TelegramApiId:        telegramApiId,
-		TelegramApiHash:      os.Getenv("TELEGRAM_API_HASH"),
-		TelegramSession:      os.Getenv("TELEGRAM_SESSION"),
-		TemporalHostPort:     os.Getenv("TEMPORAL_HOST_PORT"),
-		TemporalNamespace:    os.Getenv("TEMPORAL_NAMESPACE"),
-		TemporalTaskQueue:    os.Getenv("TEMPORAL_TASK_QUEUE"),
-		TemporalWorkflowType: os.Getenv("TEMPORAL_WORKFLOW_TYPE"),
-		HttpPort:        port,
+		PostgresConnectionString: os.Getenv("POSTGRES_CONNECTION_STRING"),
+		TelegramApiId:            telegramApiId,
+		TelegramApiHash:          os.Getenv("TELEGRAM_API_HASH"),
+		TelegramSession:          os.Getenv("TELEGRAM_SESSION"),
+		TemporalHostPort:         os.Getenv("TEMPORAL_HOST_PORT"),
+		TemporalNamespace:        os.Getenv("TEMPORAL_NAMESPACE"),
+		TemporalTaskQueue:        os.Getenv("TEMPORAL_TASK_QUEUE"),
+		TemporalWorkflowType:     os.Getenv("TEMPORAL_WORKFLOW_TYPE"),
+		HttpPort:                 port,
 	}
 
 	return config
