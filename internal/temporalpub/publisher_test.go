@@ -84,8 +84,8 @@ func TestPublisher_StartTelegramWorkflow_E2E_Postgres(t *testing.T) {
 		ID:     1001,
 		ChatID: 2002,
 		From: domain.User{
-			ID:       3003,
-			Username: "tester",
+			ID:   3003,
+			Name: "tester",
 		},
 		Text:    "hello from test",
 		Date:    time.Now().UTC(),
