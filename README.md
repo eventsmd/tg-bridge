@@ -51,6 +51,9 @@ successfully.
 
 # How to run the application
 Add required environment variables:
+
+- `POSTGRES_CONNECTION_STRING` - connection string to postgres to store offsets. Example
+  `postgres://user:password@host:port/database?sslmode=disable`
 - `TELEGRAM_API_ID`=YOUR_API_ID_HERE
 - `TELEGRAM_API_HASH`="YOUR_API_HASH_HERE"
 - `TELEGRAM_SESSION`="YOUR_SESSION_JSON_ENCODED_INTO_BASE64_FORMAT"
@@ -76,7 +79,7 @@ It requires `pack` [cli tool](https://buildpacks.io/docs/for-platform-operators/
 
 There are also environment variables that could be used to customize image build:
 
-`IMAGE` - image name to build
-`BUILDER` - builder to use for building image
-`BUILDPACK` - buildpack to use for building image
-`PUBLISH` - if set to `true` image will be published to registry
+* `IMAGE` - image name to build
+* `BUILDER` - builder to use for building image
+* `BUILDPACK` - buildpack to use for building image
+* `PUBLISH` - if set to `true` image will be published to registry
