@@ -16,7 +16,7 @@ type Channel struct {
 	supplier domain.Supplier
 }
 
-func NewChannel(ctx context.Context, client *telegram.Client, name string, supplier string) (*Channel, error) {
+func NewChannel(ctx context.Context, client *telegram.Client, name string, supplier domain.Supplier) (*Channel, error) {
 
 	api := client.API()
 
@@ -38,11 +38,9 @@ func NewChannel(ctx context.Context, client *telegram.Client, name string, suppl
 		}
 
 		return &Channel{
-			client:  client,
-			channel: channel,
-			supplier: domain.Supplier{
-				Type: supplier,
-			},
+			client:   client,
+			channel:  channel,
+			supplier: supplier,
 		}, nil
 	}
 	return nil, fmt.Errorf("channels found: %v", len(resolved.Chats))
@@ -114,4 +112,8 @@ func (c *Channel) Messages(ctx context.Context, limit int, offset int) ([]domain
 	}
 
 	return result, nil
+}
+
+func (c *Channel) Id() int64 {
+	return c.channel.ID
 }

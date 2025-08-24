@@ -11,10 +11,14 @@ import (
 	"sync"
 	"syscall"
 	"tg-bridge/internal/config"
+	"tg-bridge/internal/domain"
 	"tg-bridge/internal/healthserver"
 	"tg-bridge/internal/tgclient"
 	"tg-bridge/internal/tgsession"
 	"time"
+
+	"tg-bridge/internal/persistence"
+	"tg-bridge/internal/temporalpub"
 )
 
 func main() {
@@ -33,6 +37,21 @@ func main() {
 		log.Fatalf("Failed to create Telegram session: %v", err)
 	}
 	client := tgclient.CreateTelegramClient(cfg.TelegramApiId, cfg.TelegramApiHash, sessionStorage)
+
+	// DB connection for offsets
+	db, err := persistence.NewDatabase(cfg.PostgresConnectionString)
+	if err != nil {
+		log.Fatalf("failed to connect postgres: %v", err)
+	}
+	defer db.Close()
+
+	// Publisher for Temporal workflows
+	publisher, err := temporalpub.NewPublisher(
+		cfg, nil, nil,
+	)
+	if err != nil {
+		log.Fatalf("failed to init temporal publisher: %v", err)
+	}
 
 	log.Println("Application started. Press Ctrl+C to force shutdown...")
 
@@ -57,16 +76,16 @@ func main() {
 	go func() {
 		defer wg.Done()
 		defer close(telegramDone) // Signal completion
-		// TODO: replace test API request with real logic to read messages from channels
+
 		err := client.Run(ctx, func(ctx context.Context) error {
 			// Test connection first
 			connectCtx, connectCancel := context.WithTimeout(ctx, 30*time.Second)
-			err = tgclient.CheckTelegramSession(connectCtx, client, func() error {
+			err := tgclient.CheckTelegramSession(connectCtx, client, func() error {
 				return errors.New("not authorized, session is not valid")
 			})
 			connectCancel()
 			if err != nil {
-				log.Fatalf("Failed to connect to Telegram: %v", err)
+				return fmt.Errorf("failed to connect to Telegram: %w", err)
 			}
 
 			// Mark service as ready once Telegram session is validated
@@ -75,18 +94,87 @@ func main() {
 			if err := tgclient.ReadAuthenticatedUserInfo(ctx, client); err != nil {
 				log.Printf("Couldn't read user info: %v", err)
 			}
-			return nil
+
+			// Resolve configured channels
+			cfg.TelegramChannelsSession = make(map[domain.Supplier]tgclient.Channel, len(cfg.TelegramChannels))
+			for supplier, channelName := range cfg.TelegramChannels {
+				channel, err := tgclient.NewChannel(ctx, client, channelName, supplier)
+				if err != nil {
+					return fmt.Errorf("failed to find channel: %w", err)
+				}
+				log.Printf("💬 Found channel for %s supplier -> %s = %v",
+					supplier.Type,
+					channelName,
+					channel.Id())
+				cfg.TelegramChannelsSession[supplier] = *channel
+			}
+
+			// Main polling loop: for each channel, fetch messages from offset,
+			// start workflow per message, then persist offsets.
+			interval := time.Duration(cfg.TelegramFetchInterval) * time.Second
+
+			const pageSize = 25
+
+			for {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				default:
+				}
+
+				var toPersist []domain.Message
+
+				for supplier, ch := range cfg.TelegramChannelsSession {
+					// Load the last processed message id (offset) per chat
+					offset, err := db.GetLastMessageID(domain.ChatID(ch.Id()))
+					if err != nil {
+						log.Printf("get offset error for supplier %s: %v", supplier.Type, err)
+						continue
+					}
+
+					// Fetch messages after offset
+					msgs, err := ch.Messages(ctx, pageSize, int(offset))
+					if err != nil {
+						log.Printf("fetch messages error for supplier %s: %v", supplier.Type, err)
+						continue
+					}
+					if len(msgs) == 0 {
+						continue
+					}
+
+					// Start workflow per message
+					for _, m := range msgs {
+						if _, _, err := publisher.StartTelegramWorkflow(ctx, m); err != nil {
+							log.Printf("start workflow error (supplier=%s, msg=%d): %v", supplier.Type, m.ID, err)
+							// continue with other messages; offset will advance on successful saves
+						}
+					}
+
+					// Collect for batch persistence of max offsets per chat
+					toPersist = append(toPersist, msgs...)
+				}
+
+				// Persist offsets (per chat only max is sent inside)
+				if len(toPersist) > 0 {
+					if err := db.SaveLastMessageID(toPersist); err != nil {
+						log.Printf("save offsets error: %v", err)
+					}
+				}
+
+				// Sleep before the next iteration to avoid rate limits
+				time.Sleep(interval)
+			}
 		})
 		if err != nil {
 			hs.SetReady(false)
-			log.Printf("Telegram request failed: %v", err)
+			log.Printf("Telegram loop failed: %v", err)
 		}
 	}()
 
 	// Wait for Telegram request to complete or a shutdown signal
 	select {
 	case <-telegramDone:
-		log.Println("✅ Telegram request completed, initiating shutdown...")
+		log.Println("✅ Telegram loop completed, initiating shutdown...")
 	case sig := <-sigChan:
 		log.Printf("🛑 Received signal: %v, initiating immediate shutdown...", sig)
 	}

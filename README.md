@@ -56,6 +56,10 @@ Add required environment variables:
   `postgres://user:password@host:port/database?sslmode=disable`
 - `TELEGRAM_API_ID`=YOUR_API_ID_HERE
 - `TELEGRAM_API_HASH`="YOUR_API_HASH_HERE"
+- `TELEGRAM_CHANNELS` - comma separated list of supplier type and telegram channels to parse. Example:
+  `water=vodokanalpmrcom,electricity=eresofficial`
+- `TELEGRAM_FETCH_INTERVAL` - interval in seconds to parse telegram channels. Example: `120`. Default: `60`. It is
+  recommend to set not to set the value too low to not get your service Telegram blocked.
 - `TELEGRAM_SESSION`="YOUR_SESSION_JSON_ENCODED_INTO_BASE64_FORMAT"
 - `TEMPORAL_HOST_PORT` - Host:Port of temporal server
 - `TEMPORAL_NAMESPACE` - Namespace for temporal tasks
