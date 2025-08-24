@@ -67,3 +67,16 @@ In order to run main `tg-bridge` application build and run the application:
 go build -o bin/tg-bridge ./cmd/tg-bridge 
 TELEGRAM_API_ID=YOUR_API_ID TELEGRAM_API_HASH="YOUR_API_HASH" TELEGRAM_SESSION="GENERATED_TELEGRAM_SESSION" bin/tg-bridge
 ```
+
+# How to build tg-bridge image
+
+You could simply call `./scripts/buildpack-build-image.sh` script to build image.
+
+It requires `pack` [cli tool](https://buildpacks.io/docs/for-platform-operators/how-to/integrate-ci/pack/) to be installed.
+
+There are also environment variables that could be used to customize image build:
+
+`IMAGE` - image name to build
+`BUILDER` - builder to use for building image
+`BUILDPACK` - buildpack to use for building image
+`PUBLISH` - if set to `true` image will be published to registry
