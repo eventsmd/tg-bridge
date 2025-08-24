@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 )
@@ -12,10 +13,12 @@ type (
 )
 
 type User struct {
-	ID        UserID `json:"id"`
-	Username  string `json:"username,omitempty"`
-	FirstName string `json:"first_name,omitempty"`
-	LastName  string `json:"last_name,omitempty"`
+	ID   UserID `json:"id"`
+	Name string `json:"name,omitempty"`
+}
+
+type Supplier struct {
+	Type string `json:"type"`
 }
 
 type MessageRef struct {
@@ -63,4 +66,8 @@ func NewMessage(
 		ReplyTo: replyTo,
 		Context: context,
 	}, nil
+}
+
+func (m Message) ToJSON() ([]byte, error) {
+	return json.Marshal(m)
 }
