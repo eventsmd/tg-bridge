@@ -152,6 +152,10 @@ func main() {
 						continue
 					}
 
+					// Business metric: count received messages per Telegram channel (username)
+					channelName := cfg.TelegramChannels[supplier]
+					ms.AddTelegramChannelMessages(channelName, len(msgs))
+
 					// Start workflow per message
 					for _, m := range msgs {
 						if _, _, err := publisher.StartTelegramWorkflow(ctx, m); err != nil {

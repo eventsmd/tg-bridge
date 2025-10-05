@@ -83,6 +83,8 @@ TELEGRAM_API_ID=YOUR_API_ID TELEGRAM_API_HASH="YOUR_API_HASH" TELEGRAM_SESSION="
 Metrics are exposed on `/metrics` endpoint, enpoint is available on port specified by `METRICS_PORT` environment
 variable.
 
+There is also a metric for number of messages processed by the service by channel `telegram_channel_messages_total`.
+
 # How to build tg-bridge image
 
 You could simply call `./scripts/buildpack-build-image.sh` script to build image.
