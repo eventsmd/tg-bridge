@@ -12,6 +12,9 @@ import (
 type Server struct {
 	addr       string
 	httpServer *http.Server
+	registry   *prometheus.Registry
+
+	telegramMessages *prometheus.CounterVec
 }
 
 func New(addr string) *Server {
@@ -23,15 +26,38 @@ func New(addr string) *Server {
 		collectors.NewGoCollector(),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 	)
+
+	// Business metric: count of telegram messages received per channel (username)
+	telegramMessages := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "telegram_channel_messages_total",
+			Help: "Total number of messages received from Telegram channels, labeled by channel username.",
+		},
+		[]string{"channel"},
+	)
+	reg.MustRegister(telegramMessages)
+
 	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
-	return &Server{
-		addr: addr,
+	s := &Server{
+		addr:             addr,
+		registry:         reg,
+		telegramMessages: telegramMessages,
 		httpServer: &http.Server{
 			Addr:    addr,
 			Handler: mux,
 		},
 	}
+	return s
+}
+
+// AddTelegramChannelMessages increases the counter for a given channel by n.
+// If n <= 0, the call is a no-op.
+func (s *Server) AddTelegramChannelMessages(channel string, n int) {
+	if n <= 0 {
+		return
+	}
+	s.telegramMessages.WithLabelValues(channel).Add(float64(n))
 }
 
 func (s *Server) ListenAndServe() error {
