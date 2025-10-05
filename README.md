@@ -60,6 +60,8 @@ Add required environment variables:
   `water=vodokanalpmrcom,electricity=eresofficial`
 - `TELEGRAM_FETCH_INTERVAL` - interval in seconds to parse telegram channels. Example: `120`. Default: `60`. It is
   recommend to set not to set the value too low to not get your service Telegram blocked.
+- `TELEGRAM_PAGE_SIZE` - page size for telegram api for fetching last messages. Default: `25`. Configure based on your
+  consuming capacity.
 - `TELEGRAM_SESSION`="YOUR_SESSION_JSON_ENCODED_INTO_BASE64_FORMAT"
 - `TEMPORAL_HOST_PORT` - Host:Port of temporal server
 - `TEMPORAL_NAMESPACE` - Namespace for temporal tasks
