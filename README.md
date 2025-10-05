@@ -52,6 +52,7 @@ successfully.
 # How to run the application
 Add required environment variables:
 
+- `METRICS_PORT` - port for metrics server. Default: `8081`.
 - `POSTGRES_CONNECTION_STRING` - connection string to postgres to store offsets. Example
   `postgres://user:password@host:port/database?sslmode=disable`
 - `TELEGRAM_API_ID`=YOUR_API_ID_HERE
@@ -74,6 +75,11 @@ In order to run main `tg-bridge` application build and run the application:
 go build -o bin/tg-bridge ./cmd/tg-bridge 
 TELEGRAM_API_ID=YOUR_API_ID TELEGRAM_API_HASH="YOUR_API_HASH" TELEGRAM_SESSION="GENERATED_TELEGRAM_SESSION" bin/tg-bridge
 ```
+
+# Service metrics
+
+Metrics are exposed on `/metrics` endpoint, enpoint is available on port specified by `METRICS_PORT` environment
+variable.
 
 # How to build tg-bridge image
 
