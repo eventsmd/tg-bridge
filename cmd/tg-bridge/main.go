@@ -113,8 +113,6 @@ func main() {
 			// start workflow per message, then persist offsets.
 			interval := time.Duration(cfg.TelegramFetchInterval) * time.Second
 
-			const pageSize = 25
-
 			for {
 				select {
 				case <-ctx.Done():
@@ -133,7 +131,7 @@ func main() {
 					}
 
 					// Fetch messages after offset
-					msgs, err := ch.Messages(ctx, pageSize, int(offset))
+					msgs, err := ch.Messages(ctx, cfg.TelegramPageSize, int(offset))
 					if err != nil {
 						log.Printf("fetch messages error for supplier %s: %v", supplier.Type, err)
 						continue
