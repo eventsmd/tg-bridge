@@ -13,6 +13,7 @@ import (
 	"tg-bridge/internal/config"
 	"tg-bridge/internal/domain"
 	"tg-bridge/internal/healthserver"
+	"tg-bridge/internal/metricsserver"
 	"tg-bridge/internal/tgclient"
 	"tg-bridge/internal/tgsession"
 	"time"
@@ -67,6 +68,17 @@ func main() {
 		}
 	}()
 	log.Printf("Health/Ready server listening on %s", hs.Addr())
+
+	// Prometheus metrics server
+	ms := metricsserver.New(fmt.Sprintf(":%d", cfg.MetricsPort))
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := ms.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Metrics server error: %v", err)
+		}
+	}()
+	log.Printf("Metrics server listening on %s/metrics", ms.Addr())
 
 	// Channel to signal when Telegram request is done
 	telegramDone := make(chan struct{})
@@ -181,10 +193,13 @@ func main() {
 	hs.SetReady(false)
 	cancel()
 
-	// Graceful shutdown of HTTP server
+	// Graceful shutdown of HTTP servers
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	if err := hs.Shutdown(shutdownCtx); err != nil {
 		log.Printf("HTTP server shutdown error: %v", err)
+	}
+	if err := ms.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Metrics server shutdown error: %v", err)
 	}
 	shutdownCancel()
 

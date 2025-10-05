@@ -23,6 +23,7 @@ type Config struct {
 	TemporalTaskQueue        string
 	TemporalWorkflowType     string
 	HttpPort                 int
+	MetricsPort              int
 }
 
 func LoadConfig() Config {
@@ -55,6 +56,11 @@ func InitConfig() Config {
 		port = 8080
 	}
 
+	metricsPort, _ := strconv.Atoi(os.Getenv("METRICS_PORT"))
+	if metricsPort == 0 {
+		metricsPort = 8081
+	}
+
 	telegramPageSize, _ := strconv.Atoi(os.Getenv("TELEGRAM_PAGE_SIZE"))
 	if telegramPageSize == 0 {
 		telegramPageSize = 25
@@ -77,6 +83,7 @@ func InitConfig() Config {
 		TemporalTaskQueue:        os.Getenv("TEMPORAL_TASK_QUEUE"),
 		TemporalWorkflowType:     os.Getenv("TEMPORAL_WORKFLOW_TYPE"),
 		HttpPort:                 port,
+		MetricsPort:              metricsPort,
 	}
 
 	return config
