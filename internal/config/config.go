@@ -16,6 +16,7 @@ type Config struct {
 	TelegramChannels         map[domain.Supplier]string
 	TelegramChannelsSession  map[domain.Supplier]tgclient.Channel
 	TelegramFetchInterval    int
+	TelegramPageSize         int
 	TelegramSession          string
 	TemporalHostPort         string
 	TemporalNamespace        string
@@ -37,6 +38,7 @@ func CheckConfigFields(config Config) {
 		config.TelegramChannels == nil ||
 		len(config.TelegramChannels) == 0 ||
 		config.TelegramFetchInterval == 0 ||
+		config.TelegramPageSize == 0 ||
 		config.TelegramSession == "" ||
 		config.TemporalHostPort == "" ||
 		config.TemporalNamespace == "" ||
@@ -52,6 +54,12 @@ func InitConfig() Config {
 	if port == 0 {
 		port = 8080
 	}
+
+	telegramPageSize, _ := strconv.Atoi(os.Getenv("TELEGRAM_PAGE_SIZE"))
+	if telegramPageSize == 0 {
+		telegramPageSize = 25
+	}
+
 	telegramFetchInterval, _ := strconv.Atoi(os.Getenv("TELEGRAM_FETCH_INTERVAL"))
 	if telegramFetchInterval == 0 {
 		telegramFetchInterval = 60
@@ -62,6 +70,7 @@ func InitConfig() Config {
 		TelegramApiHash:          os.Getenv("TELEGRAM_API_HASH"),
 		TelegramChannels:         parseChannel(os.Getenv("TELEGRAM_CHANNELS")),
 		TelegramFetchInterval:    telegramFetchInterval,
+		TelegramPageSize:         telegramPageSize,
 		TelegramSession:          os.Getenv("TELEGRAM_SESSION"),
 		TemporalHostPort:         os.Getenv("TEMPORAL_HOST_PORT"),
 		TemporalNamespace:        os.Getenv("TEMPORAL_NAMESPACE"),
