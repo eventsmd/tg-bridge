@@ -17,10 +17,11 @@ set -euo pipefail
           build windows amd64
           cd "${OUTDIR}"
           for f in ${BINARY_NAME}_*; do
-            base="${f%.*}"
             if [[ "$f" == *.exe ]]; then
+              base="${f%.exe}"
               zip "${base}.zip" "$f"
             else
+              base="$f"
               tar -czf "${base}.tar.gz" "$f"
             fi
           done
