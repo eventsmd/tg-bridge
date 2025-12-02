@@ -48,9 +48,9 @@ func NewChannel(ctx context.Context, client *telegram.Client, name string, suppl
 
 func (c *Channel) Messages(ctx context.Context, limit int, offset int) ([]domain.Message, error) {
 	hist, err := c.client.API().MessagesGetHistory(ctx, &tg.MessagesGetHistoryRequest{
-		Peer:     c.channel.AsInputPeer(),
-		Limit:    limit,
-		OffsetID: offset,
+		Peer:  c.channel.AsInputPeer(),
+		Limit: limit,
+		MinID: offset,
 	})
 	if err != nil {
 		return nil, err

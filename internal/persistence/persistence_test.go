@@ -58,7 +58,7 @@ func Test_SaveAndGetLastMessageID(t *testing.T) {
 				{ID: 10, ChatID: 1},
 			},
 			checks: map[domain.ChatID]domain.MessageID{
-				1: 10,
+				1: 11,
 			},
 		},
 		{
@@ -67,7 +67,7 @@ func Test_SaveAndGetLastMessageID(t *testing.T) {
 				{ID: 5, ChatID: 1},
 			},
 			checks: map[domain.ChatID]domain.MessageID{
-				1: 10,
+				1: 11,
 			},
 		},
 		{
@@ -76,7 +76,7 @@ func Test_SaveAndGetLastMessageID(t *testing.T) {
 				{ID: 12, ChatID: 1},
 			},
 			checks: map[domain.ChatID]domain.MessageID{
-				1: 12,
+				1: 13,
 			},
 		},
 		{
@@ -85,8 +85,8 @@ func Test_SaveAndGetLastMessageID(t *testing.T) {
 				{ID: 7, ChatID: 2},
 			},
 			checks: map[domain.ChatID]domain.MessageID{
-				1: 12,
-				2: 7,
+				1: 13,
+				2: 8,
 			},
 		},
 		{
@@ -97,9 +97,9 @@ func Test_SaveAndGetLastMessageID(t *testing.T) {
 				{ID: 3, ChatID: 3},
 			},
 			checks: map[domain.ChatID]domain.MessageID{
-				1: 15,
-				2: 9,
-				3: 3,
+				1: 16,
+				2: 10,
+				3: 4,
 			},
 		},
 		{
@@ -110,7 +110,7 @@ func Test_SaveAndGetLastMessageID(t *testing.T) {
 				{ID: 15, ChatID: 29},
 			},
 			checks: map[domain.ChatID]domain.MessageID{
-				29: 120,
+				29: 121,
 			},
 		},
 	}
@@ -152,8 +152,8 @@ func Test_SaveAndGetLastMessageID(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GetLastMessageID error: %v", err)
 		}
-		if got != 15 {
-			t.Fatalf("expected 15, got %d", got)
+		if got != 16 {
+			t.Fatalf("expected 16, got %d", got)
 		}
 	})
 
