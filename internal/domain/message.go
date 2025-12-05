@@ -51,9 +51,6 @@ func NewMessage(
 	if chatID == 0 {
 		return Message{}, errors.New("chat id is required")
 	}
-	if from.ID == 0 {
-		return Message{}, errors.New("from user id is required")
-	}
 	if date.IsZero() {
 		date = time.Now().UTC()
 	}
