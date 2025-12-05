@@ -62,7 +62,7 @@ func (c *DatabaseConnection) SaveLastMessageID(messages []domain.Message) error 
 
 	batch := &pgx.Batch{}
 	for chatID, maxID := range maxPerChat {
-		batch.Queue(q, int64(chatID), int64(maxID+1))
+		batch.Queue(q, int64(chatID), int64(maxID))
 	}
 
 	br := c.pool.SendBatch(ctx, batch)
